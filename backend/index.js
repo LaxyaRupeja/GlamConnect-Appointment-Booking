@@ -5,6 +5,7 @@ require("dotenv").config()
 const Connection = require('./Configs/db');
 const Router = require("./Routes/server.routes");
 const userrouter=require("./Routes/user.route");
+const auth = require("./middleware/auth")
 app.use(cors());
 app.use(express.json());
 app.use("/", Router);

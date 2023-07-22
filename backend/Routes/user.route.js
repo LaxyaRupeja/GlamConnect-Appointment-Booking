@@ -1,16 +1,19 @@
 const express = require('express')
 const nodemailer = require("nodemailer")
-const randomstring = require("randomstring");
 const UserModel = require('../Model/user.model')
+const randomstring = require("randomstring");
+
 
 const userrouter = express.Router()
+const auth = require("../middleware/auth")
 const bcrypt = require('bcrypt')
 const app = express()
-
+const path = require("path");
 
 const jwt = require('jsonwebtoken')
+app.use(express.static(path.join(__dirname, "public")));
 
-
+const { BlacklistModel } = require('../Google_Oauth/models/blacklist')
 
 
 const sendVerificationMail = async (name, email, userId) => {
@@ -27,7 +30,7 @@ const sendVerificationMail = async (name, email, userId) => {
     });
 
     const mailOptions = {
-      from: "prashantkad240999@gmail.com",
+      from: "glamconnect18@gmail.com",
       to: email,
       subject: "For verification mail",
       html: `<p>Hi ${name}, please click here to <a href="http://localhost:8080/user/verify?id=${userId}">verify</a> your mail</p>`,
@@ -104,15 +107,7 @@ userrouter.post("/register", async (req, res) => {
 })
 
 
-userrouter.get("/data", async (req, res) => {
-  try {
-    const users = await UserModel.find()
-    res.send("all the users data will be send")
-    console.log(users)
-  } catch (err) {
-    res.send({ "msg": "cannot register", "err": err.message })
-  }
-});
+
 
 
 
@@ -230,32 +225,6 @@ userrouter.post("/forget-password", async (req, res) => {
 
 
 
-userrouter.get("/verify", async (req, res) => {
-  try {
-    const userId = req.query.id;
-
-    const user = await UserModel.updateOne(
-      { _id: userId },
-      { $set: { isVerified: true } }
-    );
-    if (!user) {
-      return res
-        .status(404)
-        .json({ error: "User not found" });
-    }
-
-    if (user.isVerified) {
-      return res.status(200).json({ message: "Email already verified" });
-    }
-
-   
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
 userrouter.get("/logout", async (req, res) => {
   try {
     const token = req.headers?.authorization;
@@ -278,6 +247,33 @@ userrouter.delete("/delete/:id", async (req, res) => {
 
 // To send verification link again
 
+userrouter.get("/verify", async (req, res) => {
+  try {
+    const userId = req.query.id;
+
+    const user = await UserModel.updateOne(
+      { _id: userId },
+      { $set: { isVerified: true } }
+    );
+    if (!user) {
+      return res
+        .status(404)
+        .json({ error: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(200).json({ message: "Email already verified" });
+    }
+    res.sendFile(path.join(__dirname, "../public/pages/verify.html"));
+   
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
 userrouter.post("/sendlink", async (req, res) => {
   try {
     const { email } = req.body;
@@ -290,6 +286,7 @@ userrouter.post("/sendlink", async (req, res) => {
     }
   } catch (error) { }
 });
+
 
 
 
